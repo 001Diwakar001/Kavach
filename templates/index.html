@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Detection System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Help Detection App</h1>
+        
+        <!-- Security Code Form -->
+        <form id="security-code-form">
+            <label for="security-code">Set Security Code:</label>
+            <input type="password" id="security-code" placeholder="Enter a code" required>
+            <button type="button" onclick="setSecurityCode()">Set Code</button>
+        </form>
+
+        <!-- Button to Start Listening -->
+        <div class="button-container">
+            <button id="start-listening-btn" onclick="startListening()">Start Listening</button>
+        </div>
+        
+        <!-- Speech Recognition Output -->
+        <div id="speech-output">
+            <strong>Recognized Text:</strong>
+            <p id="recognized-text">No speech detected yet.</p>
+        </div>
+        
+        <!-- Message Box -->
+        <div id="message-box"></div>
+    </div>
+
+    <script>
+        // WebSocket connection to Flask server
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // Listen for the 'speech_update' event from the server and update the recognized text
+        socket.on('speech_update', function(data) {
+            var recognizedText = data.text;
+            document.getElementById("recognized-text").innerText = recognizedText;
+        });
+
+        // Function to set the security code
+        function setSecurityCode() {
+            const securityCode = document.getElementById('security-code').value;
+            fetch('/set_security_code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code: securityCode }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("message-box").innerText = data.message;
+            })
+            .catch(error => {
+                console.error("Error setting security code:", error);
+            });
+        }
+
+        // Function to start listening for the "help" command
+        function startListening() {
+            fetch('/start_listening', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("message-box").innerText = data.message;
+            })
+            .catch(error => {
+                console.error("Error starting listening:", error);
+            });
+        }
+    </script>
+</body>
+</html>
